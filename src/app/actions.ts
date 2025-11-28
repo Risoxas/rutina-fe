@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { Role } from '@prisma/client'; // Import Role enum
+import { Role } from '@/generated/client/enums'; // Import Role enum
 import { signIn, signOut, auth } from '@/auth';
 import { AuthError } from 'next-auth';
 import bcrypt from 'bcryptjs';
@@ -394,7 +394,7 @@ export async function getTraineeAnalytics(userId?: string) {
     // Process logs to get max weight per exercise over time
     const strengthProgress: Record<string, { date: string, weight: number, exerciseName: string }[]> = {};
 
-    workoutLogs.forEach(log => {
+    workoutLogs.forEach((log: { date: { toISOString: () => string; }; exercises: any[]; }) => {
       const dateStr = log.date.toISOString().split('T')[0];
       log.exercises.forEach(exLog => {
         const exName = exLog.exercise.name;
