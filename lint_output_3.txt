@@ -1,0 +1,20 @@
+
+> src@0.1.0 lint
+> eslint
+
+
+C:\Users\david\Documents\coding\rutina-fe\rutina-fe\src\components\routine-builder.tsx
+  31:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\david\Documents\coding\rutina-fe\rutina-fe\src\components\trainee-dashboard.tsx
+  50:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\david\Documents\coding\rutina-fe\rutina-fe\src\components\trainer-dashboard.tsx
+  21:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 7 problems (7 errors, 0 warnings)
+

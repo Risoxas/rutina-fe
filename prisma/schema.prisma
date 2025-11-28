@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TRAINER
+  TRAINEE
+}
+
+model User {
+  id              String            @id @default(cuid())
+  email           String            @unique
+  name            String?
+  password        String?
+  roles           Role[]            @default([TRAINEE])
+  createdAt       DateTime          @default(now())
+  
+  // Trainer fields
+  trainees        User[]            @relation("TrainerTrainees")
+  trainerId       String?
+  trainer         User?             @relation("TrainerTrainees", fields: [trainerId], references: [id])
+  
+  // Data
+  routines        Routine[]
+  bodyCompositions BodyComposition[]
+  workoutLogs     WorkoutLog[]
+}
+
+model BodyComposition {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  weight      Float
+  bodyFat     Float?
+  muscleMass  Float?
+  date        DateTime @default(now())
+}
+
+model Routine {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  userId      String
+  user        User              @relation(fields: [userId], references: [id])
+  exercises   RoutineExercise[]
+  workoutLogs WorkoutLog[]
+}
+
+model Exercise {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  videoUrl    String?
+  routines    RoutineExercise[]
+  workoutLogs WorkoutExerciseLog[]
+}
+
+model RoutineExercise {
+  id         String   @id @default(cuid())
+  routineId  String
+  exerciseId String
+  sets       Int?
+  reps       Int?
+  order      Int      @default(0)
+  routine    Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@index([routineId])
+  @@index([exerciseId])
+}
+
+model WorkoutLog {
+  id          String               @id @default(cuid())
+  userId      String
+  user        User                 @relation(fields: [userId], references: [id])
+  routineId   String?
+  routine     Routine?             @relation(fields: [routineId], references: [id])
+  date        DateTime             @default(now())
+  exercises   WorkoutExerciseLog[]
+}
+
+model WorkoutExerciseLog {
+  id           String     @id @default(cuid())
+  workoutLogId String
+  workoutLog   WorkoutLog @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+  exerciseId   String
+  exercise     Exercise   @relation(fields: [exerciseId], references: [id])
+  setNumber    Int
+  reps         Int
+  weight       Float
+  
+  @@index([workoutLogId])
+  @@index([exerciseId])
+}
