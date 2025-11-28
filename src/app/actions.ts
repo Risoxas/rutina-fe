@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { Role } from '../generated/client/enums'; // Import Role enum
+import { Role } from '@prisma/client'; // Import Role enum
 import { signIn, signOut, auth } from '@/auth';
 import { AuthError } from 'next-auth';
 import bcrypt from 'bcryptjs';
