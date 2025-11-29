@@ -317,6 +317,35 @@ export async function addTrainerToTrainee(traineeId: string, trainerId: string) 
 
 }
 
+export async function addSelfAsTrainee(trainerId: string) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: trainerId } });
+    if (!user) {
+      return { error: 'User not found' };
+    }
+
+    const updatedRoles = user.roles.includes(Role.TRAINEE)
+      ? user.roles
+      : [...user.roles, Role.TRAINEE];
+
+    await prisma.user.update({
+      where: { id: trainerId },
+      data: {
+        roles: updatedRoles,
+        trainers: {
+          connect: { id: trainerId },
+        },
+      },
+    });
+
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to add self as trainee:", error);
+    return { error: 'Failed to add self as trainee' };
+  }
+}
+
 export async function getAllTrainers(currentTrainerId: string) {
   return await prisma.user.findMany({
     where: {
@@ -465,7 +494,7 @@ export async function getTraineeAnalytics(userId?: string) {
         if (!log.date || !log.exercises) return;
         
         const dateStr = log.date.toISOString().split('T')[0];
-        log.exercises.forEach((exLog: any) => {
+        log.exercises.forEach((exLog) => {
           if (!exLog.exercise || !exLog.exercise.name) return;
           
           const exName = exLog.exercise.name;

@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Users, Dumbbell } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { createTrainee, addExercise, getAllTrainers, addTrainerToTrainee, getUnassignedTrainees } from '@/app/actions';
+import { createTrainee, addExercise, getAllTrainers, addTrainerToTrainee, getUnassignedTrainees, addSelfAsTrainee } from '@/app/actions';
 import { RoutineBuilder } from './routine-builder';
 import { TraineeHistory } from './trainee-history';
 
@@ -109,6 +109,16 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
     }
   }
 
+  async function handleAddSelf() {
+    const result = await addSelfAsTrainee(userId);
+    if (result?.error) {
+      // Handle error (maybe show toast)
+      console.error(result.error);
+    } else {
+      onRefresh();
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -119,6 +129,9 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
               <Plus className="mr-2 h-4 w-4" /> Add Trainee
             </Button>
           </DialogTrigger>
+          <Button variant="outline" className="ml-2" onClick={handleAddSelf}>
+            Add Myself as Trainee
+          </Button>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add New Trainee</DialogTitle>
