@@ -159,34 +159,35 @@ export async function deleteRoutine(id: string) {
 // New Actions
 
 export async function getTrainees(trainerId: string) {
-  return await prisma.user.findMany({
+  const relations = await prisma.trainerTrainee.findMany({
     where: {
-      roles: { has: Role.TRAINEE },
-      trainers: {
-        some: {
-          id: trainerId,
-        },
-      },
+      trainerId: trainerId,
     },
     include: {
-      routines: true,
-      workoutLogs: {
-        orderBy: { date: 'desc' },
+      trainee: {
         include: {
-          routine: true,
-          exercises: {
+          routines: true,
+          workoutLogs: {
+            orderBy: { date: 'desc' },
             include: {
-              exercise: true
+              routine: true,
+              exercises: {
+                include: {
+                  exercise: true
+                }
+              }
             }
-          }
+          },
+          bodyCompositions: {
+            orderBy: { date: 'desc' },
+            take: 1,
+          },
         }
-      },
-      bodyCompositions: {
-        orderBy: { date: 'desc' },
-        take: 1,
-      },
-    },
+      }
+    }
   });
+
+  return relations.map(r => r.trainee);
 }
 
 export async function addBodyComposition(userId: string, formData: FormData) {
@@ -262,9 +263,11 @@ export async function createTrainee(formData: FormData) {
       where: { email },
       data: {
         roles: updatedRoles,
-        trainers: {
-          connect: { id: session.user.id },
-        },
+        asTrainee: {
+          create: {
+            trainerId: session.user.id
+          }
+        }
       },
     });
     
@@ -280,9 +283,11 @@ export async function createTrainee(formData: FormData) {
       password: hashedPassword,
       name,
       roles: [Role.TRAINEE],
-      trainers: {
-        connect: { id: session.user.id },
-      },
+      asTrainee: {
+        create: {
+          trainerId: session.user.id
+        }
+      }
     },
   });
 
@@ -300,13 +305,25 @@ export async function addTrainerToTrainee(traineeId: string, trainerId: string) 
       return { error: 'Trainer not found' };
     }
 
-    await prisma.user.update({
-      where: { id: traineeId },
+    // Check if relation already exists
+    const existing = await prisma.trainerTrainee.findUnique({
+      where: {
+        trainerId_traineeId: {
+          trainerId,
+          traineeId
+        }
+      }
+    });
+
+    if (existing) {
+      return { error: 'Trainee already assigned to this trainer' };
+    }
+
+    await prisma.trainerTrainee.create({
       data: {
-        trainers: {
-          connect: { id: trainerId },
-        },
-      },
+        trainerId,
+        traineeId
+      }
     });
     revalidatePath('/');
     return { success: true };
@@ -332,9 +349,11 @@ export async function addSelfAsTrainee(trainerId: string) {
       where: { id: trainerId },
       data: {
         roles: updatedRoles,
-        trainers: {
-          connect: { id: trainerId },
-        },
+        asTrainee: {
+          create: {
+            trainerId: trainerId
+          }
+        }
       },
     });
 
@@ -365,7 +384,7 @@ export async function getUnassignedTrainees() {
   return await prisma.user.findMany({
     where: {
       roles: { has: Role.TRAINEE },
-      trainers: { none: {} },
+      asTrainee: { none: {} },
     },
     select: {
       id: true,

@@ -23,13 +23,26 @@ model User {
   createdAt       DateTime          @default(now())
   
   // Trainer fields
-  trainees        User[]            @relation("TrainerTrainees")
-  trainers        User[]            @relation("TrainerTrainees")
+  asTrainer       TrainerTrainee[]  @relation("AsTrainer")
+  asTrainee       TrainerTrainee[]  @relation("AsTrainee")
   
   // Data
   routines        Routine[]
   bodyCompositions BodyComposition[]
   workoutLogs     WorkoutLog[]
+}
+
+model TrainerTrainee {
+  id        String   @id @default(cuid())
+  trainerId String
+  traineeId String
+  trainer   User     @relation("AsTrainer", fields: [trainerId], references: [id])
+  trainee   User     @relation("AsTrainee", fields: [traineeId], references: [id])
+  assignedAt DateTime @default(now())
+
+  @@unique([trainerId, traineeId])
+  @@index([trainerId])
+  @@index([traineeId])
 }
 
 model BodyComposition {
