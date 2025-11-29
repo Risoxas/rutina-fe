@@ -162,7 +162,11 @@ export async function getTrainees(trainerId: string) {
   return await prisma.user.findMany({
     where: {
       roles: { has: Role.TRAINEE },
-      trainerId: trainerId,
+      trainers: {
+        some: {
+          id: trainerId,
+        },
+      },
     },
     include: {
       routines: true,
@@ -258,7 +262,9 @@ export async function createTrainee(formData: FormData) {
       where: { email },
       data: {
         roles: updatedRoles,
-        trainerId: session.user.id,
+        trainers: {
+          connect: { id: session.user.id },
+        },
       },
     });
     
@@ -274,12 +280,32 @@ export async function createTrainee(formData: FormData) {
       password: hashedPassword,
       name,
       roles: [Role.TRAINEE],
-      trainerId: session.user.id,
+      trainers: {
+        connect: { id: session.user.id },
+      },
     },
   });
 
   revalidatePath('/');
   return { success: true };
+}
+
+export async function addTrainerToTrainee(traineeId: string, trainerId: string) {
+  try {
+    await prisma.user.update({
+      where: { id: traineeId },
+      data: {
+        trainers: {
+          connect: { id: trainerId },
+        },
+      },
+    });
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to add trainer to trainee:", error);
+    return { error: 'Failed to add trainer' };
+  }
 }
 
 export async function addExercise(formData: FormData) {

@@ -24,8 +24,7 @@ model User {
   
   // Trainer fields
   trainees        User[]            @relation("TrainerTrainees")
-  trainerId       String?
-  trainer         User?             @relation("TrainerTrainees", fields: [trainerId], references: [id])
+  trainers        User[]            @relation("TrainerTrainees")
   
   // Data
   routines        Routine[]
