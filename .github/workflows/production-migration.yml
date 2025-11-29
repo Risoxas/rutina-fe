@@ -14,12 +14,13 @@ on:
         type: choice
         options:
           - preview
-          - prod
+          - production
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'preview') }}
+    environment: 
+      name: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'preview' }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
