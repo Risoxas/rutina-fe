@@ -291,7 +291,15 @@ export async function createTrainee(formData: FormData) {
 }
 
 export async function addTrainerToTrainee(traineeId: string, trainerId: string) {
+  console.log(`[addTrainerToTrainee] Attempting to connect trainee ${traineeId} to trainer ${trainerId}`);
   try {
+    // Verify trainer exists first
+    const trainer = await prisma.user.findUnique({ where: { id: trainerId } });
+    if (!trainer) {
+      console.error(`[addTrainerToTrainee] Trainer ${trainerId} not found`);
+      return { error: 'Trainer not found' };
+    }
+
     await prisma.user.update({
       where: { id: traineeId },
       data: {
@@ -306,6 +314,38 @@ export async function addTrainerToTrainee(traineeId: string, trainerId: string) 
     console.error("Failed to add trainer to trainee:", error);
     return { error: 'Failed to add trainer' };
   }
+
+}
+
+export async function getAllTrainers(currentTrainerId: string) {
+  return await prisma.user.findMany({
+    where: {
+      roles: { has: Role.TRAINER },
+      NOT: { id: currentTrainerId },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+    orderBy: { name: 'asc' },
+  });
+}
+
+export async function getUnassignedTrainees() {
+  return await prisma.user.findMany({
+    where: {
+      roles: { has: Role.TRAINEE },
+      trainers: { none: {} },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 }
 
 export async function addExercise(formData: FormData) {

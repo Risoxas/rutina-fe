@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Users, Dumbbell } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { createTrainee, addExercise } from '@/app/actions';
+import { createTrainee, addExercise, getAllTrainers, addTrainerToTrainee, getUnassignedTrainees } from '@/app/actions';
 import { RoutineBuilder } from './routine-builder';
 import { TraineeHistory } from './trainee-history';
 
@@ -29,11 +29,62 @@ interface TrainerDashboardProps {
     workoutLogs?: any[];
   };
   onRefresh: () => void;
+  userId: string;
 }
 
-export function TrainerDashboard({ data, onRefresh }: TrainerDashboardProps) {
+export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardProps) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [manageTrainersOpen, setManageTrainersOpen] = useState(false);
+  const [selectedTraineeId, setSelectedTraineeId] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [availableTrainers, setAvailableTrainers] = useState<any[]>([]);
+
+  const [selectedTrainerId, setSelectedTrainerId] = useState<string>('');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [unassignedTrainees, setUnassignedTrainees] = useState<any[]>([]);
+
+  async function handleFetchUnassigned() {
+    const trainees = await getUnassignedTrainees();
+    setUnassignedTrainees(trainees);
+  }
+
+  async function handleClaimTrainee(traineeId: string) {
+    console.log('[TrainerDashboard] Claiming trainee:', traineeId, 'for user:', userId);
+    if (!userId) {
+      console.error('[TrainerDashboard] No userId available!');
+      return;
+    }
+    const result = await addTrainerToTrainee(traineeId, userId);
+    if (result?.error) {
+      // Handle error (maybe show toast)
+      console.error(result.error);
+    } else {
+      // Refresh list and dashboard
+      await handleFetchUnassigned();
+      onRefresh();
+    }
+  }
+
+  async function handleManageTrainers(traineeId: string) {
+    setSelectedTraineeId(traineeId);
+    const trainers = await getAllTrainers(userId);
+    setAvailableTrainers(trainers);
+    setManageTrainersOpen(true);
+  }
+
+  async function handleAddTrainer() {
+    if (!selectedTraineeId || !selectedTrainerId) return;
+
+    const result = await addTrainerToTrainee(selectedTraineeId, selectedTrainerId);
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      setManageTrainersOpen(false);
+      setSelectedTrainerId('');
+      // Optional: show success message
+    }
+  }
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -101,6 +152,39 @@ export function TrainerDashboard({ data, onRefresh }: TrainerDashboardProps) {
             </form>
           </DialogContent>
         </Dialog>
+
+
+        <Dialog open={manageTrainersOpen} onOpenChange={setManageTrainersOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Manage Trainers</DialogTitle>
+              <DialogDescription>
+                Add another trainer to this trainee.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="trainer-select" className="text-right">
+                  Trainer
+                </Label>
+                <select
+                  id="trainer-select"
+                  className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={selectedTrainerId}
+                  onChange={(e) => setSelectedTrainerId(e.target.value)}
+                >
+                  <option value="">Select a trainer...</option>
+                  {availableTrainers.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name || t.email}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleAddTrainer} disabled={!selectedTrainerId}>Add Trainer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -129,6 +213,8 @@ export function TrainerDashboard({ data, onRefresh }: TrainerDashboardProps) {
       <Tabs defaultValue="trainees" className="space-y-4">
         <TabsList>
           <TabsTrigger value="trainees">Trainees</TabsTrigger>
+
+          <TabsTrigger value="unassigned" onClick={handleFetchUnassigned}>New Signups</TabsTrigger>
           <TabsTrigger value="exercises">Exercise Library</TabsTrigger>
         </TabsList>
         <TabsContent value="trainees" className="space-y-4">
@@ -184,12 +270,64 @@ export function TrainerDashboard({ data, onRefresh }: TrainerDashboardProps) {
                             <TraineeHistory workoutLogs={trainee.workoutLogs || []} />
                           </DialogContent>
                         </Dialog>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="ml-2"
+                          onClick={() => handleManageTrainers(trainee.id)}
+                        >
+                          Manage Trainers
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
                   {data.trainees?.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center">No trainees found.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="unassigned" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>New Signups</CardTitle>
+              <CardDescription>
+                Trainees who have signed up but are not assigned to any trainer.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {unassignedTrainees.map((trainee) => (
+                    <TableRow key={trainee.id}>
+                      <TableCell className="font-medium">{trainee.name || 'N/A'}</TableCell>
+                      <TableCell>{trainee.email}</TableCell>
+                      <TableCell>{new Date(trainee.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          onClick={() => handleClaimTrainee(trainee.id)}
+                        >
+                          Claim Trainee
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {unassignedTrainees.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center">No unassigned trainees found.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

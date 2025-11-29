@@ -71,6 +71,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (user) {
             // @ts-expect-error - roles is not in the default session type
             session.user.roles = user.roles;
+        } else {
+            // User not found in DB (e.g. DB reset), invalidate user in session
+            // @ts-expect-error - assigning null to user to force signout/error
+            session.user = null;
         }
       }
       return session;
