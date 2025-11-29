@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
-import { Role } from '@/generated/client/enums'; // Import Role enum
+import { Role } from '@prisma/client'; // Import Role enum
 import { signIn, signOut, auth } from '@/auth';
 import { AuthError } from 'next-auth';
 import bcrypt from 'bcryptjs';
@@ -378,7 +378,7 @@ export async function getTraineeAnalytics(userId?: string) {
       where: { userId: targetUserId },
       orderBy: { date: 'asc' },
       select: { date: true, weight: true, bodyFat: true, muscleMass: true }
-    });
+    }) || [];
 
     // Fetch Strength Progress (Max weight per exercise per day)
     const workoutLogs = await prisma.workoutLog.findMany({
@@ -389,34 +389,40 @@ export async function getTraineeAnalytics(userId?: string) {
         }
       },
       orderBy: { date: 'asc' }
-    });
+    }) || [];
 
     // Process logs to get max weight per exercise over time
     const strengthProgress: Record<string, { date: string, weight: number, exerciseName: string }[]> = {};
 
-    workoutLogs.forEach((log: { date: { toISOString: () => string; }; exercises: any[]; }) => {
-      const dateStr = log.date.toISOString().split('T')[0];
-      log.exercises.forEach(exLog => {
-        const exName = exLog.exercise.name;
-        if (!strengthProgress[exName]) {
-          strengthProgress[exName] = [];
-        }
+    if (workoutLogs && Array.isArray(workoutLogs)) {
+      workoutLogs.forEach((log) => {
+        if (!log.date || !log.exercises) return;
         
-        // Check if we already have an entry for this date
-        const existingEntry = strengthProgress[exName].find(e => e.date === dateStr);
-        if (existingEntry) {
-          if (exLog.weight > existingEntry.weight) {
-            existingEntry.weight = exLog.weight;
+        const dateStr = log.date.toISOString().split('T')[0];
+        log.exercises.forEach((exLog: any) => {
+          if (!exLog.exercise || !exLog.exercise.name) return;
+          
+          const exName = exLog.exercise.name;
+          if (!strengthProgress[exName]) {
+            strengthProgress[exName] = [];
           }
-        } else {
-          strengthProgress[exName].push({
-            date: dateStr,
-            weight: exLog.weight,
-            exerciseName: exName
-          });
-        }
+          
+          // Check if we already have an entry for this date
+          const existingEntry = strengthProgress[exName].find(e => e.date === dateStr);
+          if (existingEntry) {
+            if (exLog.weight > existingEntry.weight) {
+              existingEntry.weight = exLog.weight;
+            }
+          } else {
+            strengthProgress[exName].push({
+              date: dateStr,
+              weight: exLog.weight,
+              exerciseName: exName
+            });
+          }
+        });
       });
-    });
+    }
 
     return { 
       success: true, 
@@ -427,6 +433,6 @@ export async function getTraineeAnalytics(userId?: string) {
     };
   } catch (error) {
     console.error('Failed to fetch analytics:', error);
-    return { error: 'Failed to fetch analytics' };
+    return { error: 'Failed to fetch analytics. Please try again later.' };
   }
 }

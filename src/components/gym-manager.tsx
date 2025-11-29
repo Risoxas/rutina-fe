@@ -6,7 +6,7 @@ import { TraineeDashboard } from '@/components/trainee-dashboard';
 import { Button } from '@/components/ui/button';
 import { logout, getDashboardData, getTraineeAnalytics } from '@/app/actions';
 import { LogOut } from 'lucide-react';
-import { Role } from '@/generated/client/enums';
+import { Role } from '@prisma/client';
 
 interface GymManagerProps {
   user: {
