@@ -5,10 +5,13 @@
 
 */
 -- DropForeignKey
-ALTER TABLE "User" DROP CONSTRAINT "User_trainerId_fkey";
+ALTER TABLE "User" DROP CONSTRAINT IF EXISTS "User_trainerId_fkey";
 
 -- AlterTable
-ALTER TABLE "User" DROP COLUMN "trainerId";
+ALTER TABLE "User" DROP COLUMN IF EXISTS "trainerId";
+
+-- DropTable
+DROP TABLE IF EXISTS "_TrainerTrainees";
 
 -- CreateTable
 CREATE TABLE "TrainerTrainee" (
