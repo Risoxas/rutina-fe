@@ -74,9 +74,16 @@ export async function logout() {
 export async function getRoutines() {
   return await prisma.routine.findMany({
     include: {
-      exercises: {
+      days: {
         include: {
-          exercise: true,
+          exercises: {
+            include: {
+              exercise: true,
+            },
+            orderBy: {
+              order: 'asc',
+            },
+          },
         },
         orderBy: {
           order: 'asc',
@@ -97,31 +104,34 @@ export async function createRoutine(formData: FormData) {
 
   const name = formData.get('name') as string;
   const description = formData.get('description') as string;
-  const exercisesJson = formData.get('exercises') as string;
+  const daysJson = formData.get('days') as string;
   const traineeId = formData.get('traineeId') as string;
 
   if (!name) {
     return { error: 'Name is required' };
   }
 
-  // If traineeId is provided, use it as userId (assign to trainee)
-  // Otherwise default to session user (trainer's template) - though user wants strict assignment now
   const targetUserId = traineeId || session.user.id;
   
   interface ExerciseInput {
     id: string;
-    sets?: string;
-    reps?: string;
+    sets?: string | number;
+    reps?: string | number;
+  }
+
+  interface DayInput {
+    name: string;
+    exercises: ExerciseInput[];
   }
   
-  let exercises: ExerciseInput[] = [];
+  let days: DayInput[] = [];
   try {
-    if (exercisesJson) {
-      exercises = JSON.parse(exercisesJson);
+    if (daysJson) {
+      days = JSON.parse(daysJson);
     }
   } catch (e) {
-    console.error("Failed to parse exercises", e);
-    return { error: 'Invalid exercise data' };
+    console.error("Failed to parse days", e);
+    return { error: 'Invalid routine data' };
   }
 
   try {
@@ -130,12 +140,18 @@ export async function createRoutine(formData: FormData) {
         name,
         description,
         userId: targetUserId,
-        exercises: {
-          create: exercises.map((ex, index) => ({
-            exerciseId: ex.id,
-            sets: ex.sets ? parseInt(ex.sets) : null,
-            reps: ex.reps ? parseInt(ex.reps) : null,
-            order: index,
+        days: {
+          create: days.map((day, dayIndex) => ({
+            name: day.name,
+            order: dayIndex,
+            exercises: {
+              create: day.exercises.map((ex, exIndex) => ({
+                exerciseId: ex.id,
+                sets: ex.sets ? Number(ex.sets) : null,
+                reps: ex.reps ? String(ex.reps) : null,
+                order: exIndex,
+              })),
+            },
           })),
         },
       },
@@ -166,7 +182,17 @@ export async function getTrainees(trainerId: string) {
     include: {
       trainee: {
         include: {
-          routines: true,
+          routines: {
+            include: {
+              days: {
+                include: {
+                  exercises: {
+                    include: { exercise: true }
+                  }
+                }
+              }
+            }
+          },
           workoutLogs: {
             orderBy: { date: 'desc' },
             include: {
@@ -214,7 +240,15 @@ export async function getDashboardData(userId: string, role: Role) {
     const routines = await prisma.routine.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      include: { exercises: { include: { exercise: true } } }
+      include: { 
+        days: {
+          include: {
+            exercises: {
+              include: { exercise: true }
+            }
+          }
+        }
+      }
     });
     const exercises = await prisma.exercise.findMany({ orderBy: { name: 'asc' } });
     const activeRoutines = routines.length;
@@ -224,7 +258,15 @@ export async function getDashboardData(userId: string, role: Role) {
       where: { id: userId },
       include: {
         routines: {
-          include: { exercises: { include: { exercise: true } } }
+          include: { 
+            days: {
+              include: {
+                exercises: {
+                  include: { exercise: true }
+                }
+              }
+            }
+          }
         },
         bodyCompositions: { orderBy: { date: 'desc' }, take: 1 },
         workoutLogs: {
@@ -400,9 +442,19 @@ export async function addExercise(formData: FormData) {
   const name = formData.get('name') as string;
   const description = formData.get('description') as string;
   const videoUrl = formData.get('videoUrl') as string;
+  const bodyPartsJson = formData.get('bodyParts') as string;
 
   if (!name) {
     return { error: 'Name is required' };
+  }
+
+  let bodyParts: string[] = [];
+  try {
+    if (bodyPartsJson) {
+      bodyParts = JSON.parse(bodyPartsJson);
+    }
+  } catch (e) {
+    console.error("Failed to parse bodyParts", e);
   }
 
   const newExercise = await prisma.exercise.create({
@@ -410,11 +462,51 @@ export async function addExercise(formData: FormData) {
       name,
       description,
       videoUrl,
+      bodyParts,
     },
   });
 
   revalidatePath('/');
   return { success: true, exercise: newExercise };
+}
+
+export async function updateExercise(formData: FormData) {
+  const id = formData.get('id') as string;
+  const name = formData.get('name') as string;
+  const description = formData.get('description') as string;
+  const videoUrl = formData.get('videoUrl') as string;
+  const bodyPartsJson = formData.get('bodyParts') as string;
+
+  if (!id || !name) {
+    return { error: 'ID and Name are required' };
+  }
+
+  let bodyParts: string[] = [];
+  try {
+    if (bodyPartsJson) {
+      bodyParts = JSON.parse(bodyPartsJson);
+    }
+  } catch (e) {
+    console.error("Failed to parse bodyParts", e);
+  }
+
+  try {
+    const updatedExercise = await prisma.exercise.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        videoUrl,
+        bodyParts,
+      },
+    });
+
+    revalidatePath('/');
+    return { success: true, exercise: updatedExercise };
+  } catch (error) {
+    console.error("Failed to update exercise:", error);
+    return { error: 'Failed to update exercise' };
+  }
 }
 
 export async function getExercises() {

@@ -10,9 +10,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Users, Dumbbell } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { createTrainee, addExercise, getAllTrainers, addTrainerToTrainee, getUnassignedTrainees, addSelfAsTrainee } from '@/app/actions';
+import { createTrainee, addExercise, updateExercise, getAllTrainers, addTrainerToTrainee, getUnassignedTrainees, addSelfAsTrainee } from '@/app/actions';
 import { RoutineBuilder } from './routine-builder';
 import { TraineeHistory } from './trainee-history';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pencil, Check } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 interface TrainerDashboardProps {
   data: {
@@ -32,6 +38,10 @@ interface TrainerDashboardProps {
   userId: string;
 }
 
+const BODY_PARTS = [
+  "Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio", "Full Body"
+];
+
 export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardProps) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +53,15 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
   const [selectedTrainerId, setSelectedTrainerId] = useState<string>('');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [unassignedTrainees, setUnassignedTrainees] = useState<any[]>([]);
+
+  // Exercise Management State
+  const [editExerciseOpen, setEditExerciseOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [editingExercise, setEditingExercise] = useState<any>(null);
+  const [filterBodyPart, setFilterBodyPart] = useState<string>("All");
+
+  // Multi-select state
+  const [selectedBodyParts, setSelectedBodyParts] = useState<string[]>([]);
 
   async function handleFetchUnassigned() {
     const trainees = await getUnassignedTrainees();
@@ -99,12 +118,27 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
 
   async function handleExerciseSubmit(formData: FormData) {
     setError(null);
+    formData.append('bodyParts', JSON.stringify(selectedBodyParts));
     const result = await addExercise(formData);
     if (result?.error) {
       setError(result.error);
     } else {
-      // Ideally use separate state, but for now just close
       setOpen(false);
+      setSelectedBodyParts([]);
+      onRefresh();
+    }
+  }
+
+  async function handleUpdateExercise(formData: FormData) {
+    setError(null);
+    formData.append('bodyParts', JSON.stringify(selectedBodyParts));
+    const result = await updateExercise(formData);
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      setEditExerciseOpen(false);
+      setEditingExercise(null);
+      setSelectedBodyParts([]);
       onRefresh();
     }
   }
@@ -118,6 +152,16 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
       onRefresh();
     }
   }
+
+  const filteredExercises = data.exercises?.filter(ex =>
+    filterBodyPart === "All" || (ex.bodyParts && ex.bodyParts.includes(filterBodyPart))
+  ) || [];
+
+  const toggleBodyPart = (part: string) => {
+    setSelectedBodyParts(prev =>
+      prev.includes(part) ? prev.filter(p => p !== part) : [...prev, part]
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -357,11 +401,25 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">All Exercises</h3>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-medium">All Exercises</h3>
+                  <Select value={filterBodyPart} onValueChange={setFilterBodyPart}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter by Body Part" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Body Parts</SelectItem>
+                      {BODY_PARTS.map(part => (
+                        <SelectItem key={part} value={part}>{part}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => setSelectedBodyParts([])}>
                       <Plus className="mr-2 h-4 w-4" /> Add Exercise
                     </Button>
                   </DialogTrigger>
@@ -386,6 +444,52 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
                         <Input id="ex-desc" name="description" className="col-span-3" />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">
+                          Body Parts
+                        </Label>
+                        <div className="col-span-3">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="w-full justify-between">
+                                {selectedBodyParts.length > 0 ? `${selectedBodyParts.length} selected` : "Select body parts"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[200px] p-0">
+                              <Command>
+                                <CommandInput placeholder="Search body part..." />
+                                <CommandList>
+                                  <CommandEmpty>No body part found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {BODY_PARTS.map((part) => (
+                                      <CommandItem
+                                        key={part}
+                                        value={part}
+                                        onSelect={() => toggleBodyPart(part)}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            selectedBodyParts.includes(part) ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {part}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {selectedBodyParts.map(part => (
+                              <Badge key={part} variant="secondary" className="text-xs">
+                                {part}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="ex-video" className="text-right">
                           Video URL
                         </Label>
@@ -399,11 +503,116 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
                 </Dialog>
               </div>
 
+              {/* Edit Dialog */}
+              <Dialog open={editExerciseOpen} onOpenChange={setEditExerciseOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Exercise</DialogTitle>
+                    <DialogDescription>
+                      Update exercise details.
+                    </DialogDescription>
+                  </DialogHeader>
+                  {editingExercise && (
+                    <form action={handleUpdateExercise} className="grid gap-4 py-4">
+                      <input type="hidden" name="id" value={editingExercise.id} />
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="edit-name" className="text-right">
+                          Name
+                        </Label>
+                        <Input id="edit-name" name="name" defaultValue={editingExercise.name} className="col-span-3" required />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="edit-desc" className="text-right">
+                          Description
+                        </Label>
+                        <Input id="edit-desc" name="description" defaultValue={editingExercise.description || ''} className="col-span-3" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">
+                          Body Parts
+                        </Label>
+                        <div className="col-span-3">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="w-full justify-between">
+                                {selectedBodyParts.length > 0 ? `${selectedBodyParts.length} selected` : "Select body parts"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[200px] p-0">
+                              <Command>
+                                <CommandInput placeholder="Search body part..." />
+                                <CommandList>
+                                  <CommandEmpty>No body part found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {BODY_PARTS.map((part) => (
+                                      <CommandItem
+                                        key={part}
+                                        value={part}
+                                        onSelect={() => toggleBodyPart(part)}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            selectedBodyParts.includes(part) ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {part}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {selectedBodyParts.map(part => (
+                              <Badge key={part} variant="secondary" className="text-xs">
+                                {part}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="edit-video" className="text-right">
+                          Video URL
+                        </Label>
+                        <Input id="edit-video" name="videoUrl" defaultValue={editingExercise.videoUrl || ''} className="col-span-3" placeholder="https://..." />
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit">Save Changes</Button>
+                      </DialogFooter>
+                    </form>
+                  )}
+                </DialogContent>
+              </Dialog>
+
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {data.exercises?.map((exercise) => (
-                  <Card key={exercise.id}>
+                {filteredExercises.map((exercise) => (
+                  <Card key={exercise.id} className="relative group">
                     <CardHeader>
-                      <CardTitle>{exercise.name}</CardTitle>
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="pr-8">{exercise.name}</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => {
+                            setEditingExercise(exercise);
+                            setSelectedBodyParts(exercise.bodyParts || []);
+                            setEditExerciseOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {exercise.bodyParts && exercise.bodyParts.map((part: string) => (
+                          <Badge key={part} variant="secondary" className="text-xs">
+                            {part}
+                          </Badge>
+                        ))}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground mb-2">{exercise.description || 'No description'}</p>
@@ -415,9 +624,9 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
                     </CardContent>
                   </Card>
                 ))}
-                {(!data.exercises || data.exercises.length === 0) && (
+                {filteredExercises.length === 0 && (
                   <p className="text-sm text-muted-foreground col-span-full text-center py-8">
-                    No exercises found. Click &quot;Add Exercise&quot; to create one.
+                    No exercises found.
                   </p>
                 )}
               </div>

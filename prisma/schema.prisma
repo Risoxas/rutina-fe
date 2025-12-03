@@ -63,8 +63,19 @@ model Routine {
   updatedAt   DateTime          @updatedAt
   userId      String
   user        User              @relation(fields: [userId], references: [id])
-  exercises   RoutineExercise[]
+  days        RoutineDay[]
   workoutLogs WorkoutLog[]
+}
+
+model RoutineDay {
+  id        String            @id @default(cuid())
+  name      String
+  order     Int               @default(0)
+  routineId String
+  routine   Routine           @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  exercises RoutineExercise[]
+
+  @@index([routineId])
 }
 
 model Exercise {
@@ -72,21 +83,22 @@ model Exercise {
   name        String
   description String?
   videoUrl    String?
+  bodyParts   String[]
   routines    RoutineExercise[]
   workoutLogs WorkoutExerciseLog[]
 }
 
 model RoutineExercise {
-  id         String   @id @default(cuid())
-  routineId  String
-  exerciseId String
-  sets       Int?
-  reps       Int?
-  order      Int      @default(0)
-  routine    Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
-  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  id           String     @id @default(cuid())
+  routineDayId String
+  exerciseId   String
+  sets         Int?
+  reps         String?
+  order        Int        @default(0)
+  routineDay   RoutineDay @relation(fields: [routineDayId], references: [id], onDelete: Cascade)
+  exercise     Exercise   @relation(fields: [exerciseId], references: [id])
 
-  @@index([routineId])
+  @@index([routineDayId])
   @@index([exerciseId])
 }
 
