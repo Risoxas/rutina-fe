@@ -74,11 +74,11 @@ export function TraineeDashboard({ data, onRefresh, analytics }: TraineeDashboar
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
         <h2 className="text-3xl font-bold tracking-tight">My Dashboard</h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Current Weight</CardTitle>
@@ -111,7 +111,7 @@ export function TraineeDashboard({ data, onRefresh, analytics }: TraineeDashboar
         </TabsList>
 
         <TabsContent value="routines" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {routines.map((routine) => (
               <Card key={routine.id}>
                 <CardHeader>

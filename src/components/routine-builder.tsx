@@ -144,13 +144,13 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
   return (
     <div className="py-4">
       <form action={handleCreateRoutine} className="space-y-4">
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="r-name" className="text-right">Name</Label>
-          <Input id="r-name" name="name" className="col-span-3" required placeholder="e.g. Week 1 Routine" />
+        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+          <Label htmlFor="r-name" className="text-left sm:text-right">Name</Label>
+          <Input id="r-name" name="name" className="col-span-1 sm:col-span-3" required placeholder="e.g. Week 1 Routine" />
         </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="r-desc" className="text-right">Description</Label>
-          <Input id="r-desc" name="description" className="col-span-3" placeholder="e.g. Strength focus" />
+        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+          <Label htmlFor="r-desc" className="text-left sm:text-right">Description</Label>
+          <Input id="r-desc" name="description" className="col-span-1 sm:col-span-3" placeholder="e.g. Strength focus" />
         </div>
 
         <div className="border-t pt-4 mt-4">
@@ -219,8 +219,8 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
                 </Dialog>
               </div>
 
-              <div className="grid grid-cols-12 gap-2 justify-between items-end mb-4 bg-background p-3 rounded border">
-                <div className="col-span-6">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 justify-between items-end mb-4 bg-background p-3 rounded border">
+                <div className="col-span-1 sm:col-span-6">
                   <Label className="mb-1 block text-xs">Exercise</Label>
                   <Select
                     value={selectedExerciseId}
@@ -260,15 +260,15 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
                   </Select>
                 </div>
 
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <Label className="mb-1 block text-xs">Sets</Label>
                   <Input type="number" max={20} value={sets} onChange={e => setSets(parseInt(e.target.value))} />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <Label className="mb-1 block text-xs">Reps</Label>
                   <Input type="text" value={reps} onChange={e => setReps(e.target.value)} placeholder="e.g. 12-15" />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <Button type="button" onClick={handleAddExerciseToDay} className="w-full">Add</Button>
                 </div>
               </div>

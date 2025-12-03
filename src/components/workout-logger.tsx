@@ -100,15 +100,16 @@ export function WorkoutLogger({ routine, onComplete }: WorkoutLoggerProps) {
             <div key={ex.id} className="border rounded-lg p-4">
               <h4 className="font-medium mb-2">{ex.exercise.name}</h4>
               <div className="grid gap-2">
-                <div className="grid grid-cols-10 gap-2 text-sm font-medium text-muted-foreground mb-1">
+                <div className="hidden sm:grid grid-cols-10 gap-2 text-sm font-medium text-muted-foreground mb-1">
                   <div className="col-span-1">Set</div>
                   <div className="col-span-4">Weight (kg/lbs)</div>
                   <div className="col-span-4">Reps</div>
                 </div>
                 {Array.from({ length: ex.sets || 3 }).map((_, i) => (
-                  <div key={i} className="grid grid-cols-10 gap-2 items-center">
-                    <div className="col-span-1 text-center">{i + 1}</div>
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-10 gap-2 items-center mb-4 sm:mb-0 border-b sm:border-0 pb-4 sm:pb-0 last:border-0 last:pb-0 last:mb-0">
+                    <div className="col-span-1 text-left sm:text-center font-medium sm:font-normal mb-2 sm:mb-0">Set {i + 1}</div>
                     <div className="col-span-4">
+                      <label className="sm:hidden text-xs mb-1 block text-muted-foreground">Weight (kg/lbs)</label>
                       <Input
                         type="number"
                         placeholder="0"
@@ -117,6 +118,7 @@ export function WorkoutLogger({ routine, onComplete }: WorkoutLoggerProps) {
                       />
                     </div>
                     <div className="col-span-4">
+                      <label className="sm:hidden text-xs mb-1 block text-muted-foreground">Reps</label>
                       <Input
                         type="number"
                         placeholder={ex.reps?.toString() || "0"}

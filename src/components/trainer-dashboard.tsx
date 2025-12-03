@@ -36,13 +36,14 @@ interface TrainerDashboardProps {
   };
   onRefresh: () => void;
   userId: string;
+  isAlreadyTrainee?: boolean;
 }
 
 const BODY_PARTS = [
   "Chest", "Back", "Legs", "Shoulders", "Arms", "Core", "Cardio", "Full Body"
 ];
 
-export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardProps) {
+export function TrainerDashboard({ data, onRefresh, userId, isAlreadyTrainee }: TrainerDashboardProps) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manageTrainersOpen, setManageTrainersOpen] = useState(false);
@@ -165,7 +166,7 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
         <h2 className="text-3xl font-bold tracking-tight">Trainer Dashboard</h2>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -173,9 +174,11 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
               <Plus className="mr-2 h-4 w-4" /> Add Trainee
             </Button>
           </DialogTrigger>
-          <Button variant="outline" className="ml-2" onClick={handleAddSelf}>
-            Add Myself as Trainee
-          </Button>
+          {!isAlreadyTrainee && (
+            <Button variant="outline" className="ml-2" onClick={handleAddSelf}>
+              Add Myself as Trainee
+            </Button>
+          )}
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add New Trainee</DialogTitle>
@@ -184,23 +187,23 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
               </DialogDescription>
             </DialogHeader>
             <form action={handleSubmit} className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                <Label htmlFor="name" className="text-left sm:text-right">
                   Name
                 </Label>
-                <Input id="name" name="name" className="col-span-3" required />
+                <Input id="name" name="name" className="col-span-1 sm:col-span-3" required />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                <Label htmlFor="email" className="text-left sm:text-right">
                   Email
                 </Label>
-                <Input id="email" name="email" type="email" className="col-span-3" required />
+                <Input id="email" name="email" type="email" className="col-span-1 sm:col-span-3" required />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="password" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                <Label htmlFor="password" className="text-left sm:text-right">
                   Password
                 </Label>
-                <Input id="password" name="password" type="password" className="col-span-3" required />
+                <Input id="password" name="password" type="password" className="col-span-1 sm:col-span-3" required />
               </div>
               {error && <div className="text-red-500 text-sm col-span-4 text-center">{error}</div>}
               <DialogFooter>
@@ -220,13 +223,13 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="trainer-select" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                <Label htmlFor="trainer-select" className="text-left sm:text-right">
                   Trainer
                 </Label>
                 <select
                   id="trainer-select"
-                  className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="col-span-1 sm:col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={selectedTrainerId}
                   onChange={(e) => setSelectedTrainerId(e.target.value)}
                 >
@@ -244,7 +247,7 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Trainees</CardTitle>
@@ -283,68 +286,71 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data?.trainees && data.trainees.map((trainee) => (
-                    <TableRow key={trainee.id}>
-                      <TableCell className="font-medium">{trainee.name || 'N/A'}</TableCell>
-                      <TableCell>{trainee.email}</TableCell>
-                      <TableCell>{new Date(trainee.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">Add Routine</Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
-                            <DialogHeader>
-                              <DialogTitle>Assign Routine to {trainee.name}</DialogTitle>
-                              <DialogDescription>Create a new routine for this trainee.</DialogDescription>
-                            </DialogHeader>
-                            <RoutineBuilder
-                              exercises={data.exercises || []}
-                              onRefresh={onRefresh}
-                              traineeId={trainee.id}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="ml-2">History</Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-3xl">
-                            <DialogHeader>
-                              <DialogTitle>Workout History - {trainee.name}</DialogTitle>
-                              <DialogDescription>View past workouts for this trainee.</DialogDescription>
-                            </DialogHeader>
-                            <TraineeHistory workoutLogs={trainee.workoutLogs || []} />
-                          </DialogContent>
-                        </Dialog>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="ml-2"
-                          onClick={() => handleManageTrainers(trainee.id)}
-                        >
-                          Manage Trainers
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {data.trainees?.length === 0 && (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">No trainees found.</TableCell>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {data?.trainees && data.trainees.map((trainee) => (
+                      <TableRow key={trainee.id}>
+                        <TableCell className="font-medium">{trainee.name || 'N/A'}</TableCell>
+                        <TableCell>{trainee.email}</TableCell>
+                        <TableCell>{new Date(trainee.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-col sm:flex-row justify-end gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">Add Routine</Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>Assign Routine to {trainee.name}</DialogTitle>
+                                  <DialogDescription>Create a new routine for this trainee.</DialogDescription>
+                                </DialogHeader>
+                                <RoutineBuilder
+                                  exercises={data.exercises || []}
+                                  onRefresh={onRefresh}
+                                  traineeId={trainee.id}
+                                />
+                              </DialogContent>
+                            </Dialog>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">History</Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>Workout History - {trainee.name}</DialogTitle>
+                                  <DialogDescription>View past workouts for this trainee.</DialogDescription>
+                                </DialogHeader>
+                                <TraineeHistory workoutLogs={trainee.workoutLogs || []} />
+                              </DialogContent>
+                            </Dialog>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleManageTrainers(trainee.id)}
+                            >
+                              Manage Trainers
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {data.trainees?.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center">No trainees found.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -357,38 +363,40 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {unassignedTrainees.map((trainee) => (
-                    <TableRow key={trainee.id}>
-                      <TableCell className="font-medium">{trainee.name || 'N/A'}</TableCell>
-                      <TableCell>{trainee.email}</TableCell>
-                      <TableCell>{new Date(trainee.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          onClick={() => handleClaimTrainee(trainee.id)}
-                        >
-                          Claim Trainee
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {unassignedTrainees.length === 0 && (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">No unassigned trainees found.</TableCell>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {unassignedTrainees.map((trainee) => (
+                      <TableRow key={trainee.id}>
+                        <TableCell className="font-medium">{trainee.name || 'N/A'}</TableCell>
+                        <TableCell>{trainee.email}</TableCell>
+                        <TableCell>{new Date(trainee.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            onClick={() => handleClaimTrainee(trainee.id)}
+                          >
+                            Claim Trainee
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {unassignedTrainees.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center">No unassigned trainees found.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -431,23 +439,23 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
                       </DialogDescription>
                     </DialogHeader>
                     <form action={handleExerciseSubmit} className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="ex-name" className="text-right">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="ex-name" className="text-left sm:text-right">
                           Name
                         </Label>
-                        <Input id="ex-name" name="name" className="col-span-3" required />
+                        <Input id="ex-name" name="name" className="col-span-1 sm:col-span-3" required />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="ex-desc" className="text-right">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="ex-desc" className="text-left sm:text-right">
                           Description
                         </Label>
-                        <Input id="ex-desc" name="description" className="col-span-3" />
+                        <Input id="ex-desc" name="description" className="col-span-1 sm:col-span-3" />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label className="text-left sm:text-right">
                           Body Parts
                         </Label>
-                        <div className="col-span-3">
+                        <div className="col-span-1 sm:col-span-3">
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button variant="outline" className="w-full justify-between">
@@ -489,11 +497,11 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
                           </div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="ex-video" className="text-right">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="ex-video" className="text-left sm:text-right">
                           Video URL
                         </Label>
-                        <Input id="ex-video" name="videoUrl" className="col-span-3" placeholder="https://..." />
+                        <Input id="ex-video" name="videoUrl" className="col-span-1 sm:col-span-3" placeholder="https://..." />
                       </div>
                       <DialogFooter>
                         <Button type="submit">Add Exercise</Button>
@@ -515,23 +523,23 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
                   {editingExercise && (
                     <form action={handleUpdateExercise} className="grid gap-4 py-4">
                       <input type="hidden" name="id" value={editingExercise.id} />
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="edit-name" className="text-right">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="edit-name" className="text-left sm:text-right">
                           Name
                         </Label>
-                        <Input id="edit-name" name="name" defaultValue={editingExercise.name} className="col-span-3" required />
+                        <Input id="edit-name" name="name" defaultValue={editingExercise.name} className="col-span-1 sm:col-span-3" required />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="edit-desc" className="text-right">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="edit-desc" className="text-left sm:text-right">
                           Description
                         </Label>
-                        <Input id="edit-desc" name="description" defaultValue={editingExercise.description || ''} className="col-span-3" />
+                        <Input id="edit-desc" name="description" defaultValue={editingExercise.description || ''} className="col-span-1 sm:col-span-3" />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label className="text-left sm:text-right">
                           Body Parts
                         </Label>
-                        <div className="col-span-3">
+                        <div className="col-span-1 sm:col-span-3">
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button variant="outline" className="w-full justify-between">
@@ -573,11 +581,11 @@ export function TrainerDashboard({ data, onRefresh, userId }: TrainerDashboardPr
                           </div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="edit-video" className="text-right">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="edit-video" className="text-left sm:text-right">
                           Video URL
                         </Label>
-                        <Input id="edit-video" name="videoUrl" defaultValue={editingExercise.videoUrl || ''} className="col-span-3" placeholder="https://..." />
+                        <Input id="edit-video" name="videoUrl" defaultValue={editingExercise.videoUrl || ''} className="col-span-1 sm:col-span-3" placeholder="https://..." />
                       </div>
                       <DialogFooter>
                         <Button type="submit">Save Changes</Button>

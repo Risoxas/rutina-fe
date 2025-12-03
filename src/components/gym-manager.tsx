@@ -99,7 +99,12 @@ export function GymManager({ user }: GymManagerProps) {
         ) : (
           <>
             {role === Role.TRAINER ? (
-              <TrainerDashboard data={dashboardData} onRefresh={fetchData} userId={user.id} />
+              <TrainerDashboard
+                data={dashboardData}
+                onRefresh={fetchData}
+                userId={user.id}
+                isAlreadyTrainee={user.roles?.includes(Role.TRAINEE)}
+              />
             ) : (
               <TraineeDashboard data={dashboardData} onRefresh={fetchData} analytics={dashboardData?.analytics} />
             )}
