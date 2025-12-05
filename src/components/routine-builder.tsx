@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createRoutine, addExercise } from '@/app/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { useTranslations } from 'next-intl';
 
 interface RoutineBuilderProps {
   exercises: { id: string; name: string }[];
@@ -39,6 +40,8 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const t = useTranslations('RoutineBuilder');
 
   useEffect(() => {
     return () => {
@@ -99,7 +102,7 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
     setError(null);
     const hasExercises = days.some(d => d.exercises.length > 0);
     if (!hasExercises) {
-      setError("Please add at least one exercise to one of the days.");
+      setError(t('errorNoExercises'));
       return;
     }
 
@@ -145,19 +148,19 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
     <div className="py-4">
       <form action={handleCreateRoutine} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
-          <Label htmlFor="r-name" className="text-left sm:text-right">Name</Label>
+          <Label htmlFor="r-name" className="text-left sm:text-right">{t('name')}</Label>
           <Input id="r-name" name="name" className="col-span-1 sm:col-span-3" required placeholder="e.g. Week 1 Routine" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
-          <Label htmlFor="r-desc" className="text-left sm:text-right">Description</Label>
+          <Label htmlFor="r-desc" className="text-left sm:text-right">{t('description')}</Label>
           <Input id="r-desc" name="description" className="col-span-1 sm:col-span-3" placeholder="e.g. Strength focus" />
         </div>
 
         <div className="border-t pt-4 mt-4">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-medium">Routine Days</h4>
+            <h4 className="font-medium">{t('routineDays')}</h4>
             <Button type="button" variant="outline" size="sm" onClick={handleAddDay}>
-              <Plus className="h-4 w-4 mr-2" /> Add Day
+              <Plus className="h-4 w-4 mr-2" /> {t('addDay')}
             </Button>
           </div>
 
@@ -178,7 +181,7 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
           {selectedDay && (
             <div className="bg-muted/30 p-4 rounded-lg border">
               <div className="flex items-center gap-4 mb-4">
-                <Label className="whitespace-nowrap">Day Name:</Label>
+                <Label className="whitespace-nowrap">{t('dayName')}:</Label>
                 <Input
                   value={selectedDay.name}
                   onChange={(e) => handleDayNameChange(selectedDay.id, e.target.value)}
@@ -192,28 +195,28 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
                     onClick={() => handleRemoveDay(selectedDay.id)}
                     className="text-red-500 ml-auto"
                   >
-                    Remove Day
+                    {t('removeDay')}
                   </Button>
                 )}
               </div>
 
               <div className="flex items-center mb-2">
-                <h5 className="font-medium mr-2 text-sm">Exercises for {selectedDay.name}</h5>
+                <h5 className="font-medium mr-2 text-sm">{t('exercisesFor')} {selectedDay.name}</h5>
                 <Dialog open={newExerciseOpen} onOpenChange={setNewExerciseOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" title="Create New Exercise">
+                    <Button variant="outline" size="sm" title={t('createNewExercise')}>
                       New <Plus className="h-3 w-3 ml-1" />
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>New Exercise</DialogTitle>
+                      <DialogTitle>{t('newExercise')}</DialogTitle>
                     </DialogHeader>
                     <form action={handleQuickAddExercise} className="grid gap-4 py-4">
-                      <Input name="name" placeholder="Exercise Name" required />
-                      <Input name="description" placeholder="Description" />
-                      <Input name="videoUrl" placeholder="Video URL" />
-                      <Button type="submit">Create</Button>
+                      <Input name="name" placeholder={t('exerciseName')} required />
+                      <Input name="description" placeholder={t('description')} />
+                      <Input name="videoUrl" placeholder={t('videoUrl')} />
+                      <Button type="submit">{t('create')}</Button>
                     </form>
                   </DialogContent>
                 </Dialog>
@@ -221,7 +224,7 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
 
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 justify-between items-end mb-4 bg-background p-3 rounded border">
                 <div className="col-span-1 sm:col-span-6">
-                  <Label className="mb-1 block text-xs">Exercise</Label>
+                  <Label className="mb-1 block text-xs">{t('exercise')}</Label>
                   <Select
                     value={selectedExerciseId}
                     onValueChange={setSelectedExerciseId}
@@ -244,11 +247,11 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
                               setShowTooltip(false);
                             }}
                           >
-                            <SelectValue placeholder="Select exercise..." />
+                            <SelectValue placeholder={t('selectExercise')} />
                           </SelectTrigger>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{allExercises.find(e => e.id === selectedExerciseId)?.name || "Select exercise..."}</p>
+                          <p>{allExercises.find(e => e.id === selectedExerciseId)?.name || t('selectExercise')}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -261,15 +264,15 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
                 </div>
 
                 <div className="col-span-1 sm:col-span-2">
-                  <Label className="mb-1 block text-xs">Sets</Label>
+                  <Label className="mb-1 block text-xs">{t('sets')}</Label>
                   <Input type="number" max={20} value={sets} onChange={e => setSets(parseInt(e.target.value))} />
                 </div>
                 <div className="col-span-1 sm:col-span-2">
-                  <Label className="mb-1 block text-xs">Reps</Label>
+                  <Label className="mb-1 block text-xs">{t('reps')}</Label>
                   <Input type="text" value={reps} onChange={e => setReps(e.target.value)} placeholder="e.g. 12-15" />
                 </div>
                 <div className="col-span-1 sm:col-span-2">
-                  <Button type="button" onClick={handleAddExerciseToDay} className="w-full">Add</Button>
+                  <Button type="button" onClick={handleAddExerciseToDay} className="w-full">{t('add')}</Button>
                 </div>
               </div>
 
@@ -278,12 +281,12 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
                   <div key={idx} className="flex justify-between items-center bg-background p-2 rounded border">
                     <span className="font-medium">{ex.name}</span>
                     <div className="flex items-center gap-4">
-                      <span className="text-sm text-muted-foreground">{ex.sets} sets x {ex.reps} reps</span>
-                      <Button variant="ghost" size="sm" onClick={() => removeExerciseFromDay(selectedDay.id, idx)} className="text-red-500 h-auto p-1">Remove</Button>
+                      <span className="text-sm text-muted-foreground">{ex.sets} {t('sets')} x {ex.reps} {t('reps')}</span>
+                      <Button variant="ghost" size="sm" onClick={() => removeExerciseFromDay(selectedDay.id, idx)} className="text-red-500 h-auto p-1">{t('remove')}</Button>
                     </div>
                   </div>
                 ))}
-                {selectedDay.exercises.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No exercises added to this day yet.</p>}
+                {selectedDay.exercises.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t('noExercisesDay')}</p>}
               </div>
             </div>
           )}
@@ -292,7 +295,7 @@ export function RoutineBuilder({ exercises, onRefresh, traineeId }: RoutineBuild
         {error && <div className="text-red-500 text-sm">{error}</div>}
 
         <div className="flex justify-end">
-          <Button type="submit">Save Routine</Button>
+          <Button type="submit">{t('saveRoutine')}</Button>
         </div>
       </form>
     </div>

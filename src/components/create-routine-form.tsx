@@ -4,9 +4,11 @@ import { useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const t = useTranslations('CreateRoutineForm');
 
   return (
     <button
@@ -18,7 +20,7 @@ function SubmitButton() {
       )}
     >
       <Plus className="h-4 w-4" />
-      {pending ? 'Creating...' : 'Create Routine'}
+      {pending ? t('creating') : t('createRoutine')}
     </button>
   );
 }
@@ -29,6 +31,7 @@ export function CreateRoutineForm({
   createRoutine: (formData: FormData) => Promise<void>;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const t = useTranslations('CreateRoutineForm');
 
   return (
     <form
@@ -44,14 +47,14 @@ export function CreateRoutineForm({
           htmlFor="name"
           className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
         >
-          Name
+          {t('name')}
         </label>
         <input
           type="text"
           id="name"
           name="name"
           required
-          placeholder="e.g., Morning Cardio"
+          placeholder={t('namePlaceholder')}
           className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder:text-zinc-500"
         />
       </div>
@@ -60,13 +63,13 @@ export function CreateRoutineForm({
           htmlFor="description"
           className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
         >
-          Description
+          {t('description')}
         </label>
         <textarea
           id="description"
           name="description"
           rows={3}
-          placeholder="Optional description..."
+          placeholder={t('descPlaceholder')}
           className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder:text-zinc-500 resize-none"
         />
       </div>

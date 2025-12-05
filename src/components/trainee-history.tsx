@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { useTranslations } from 'next-intl';
 
 interface WorkoutLogExercise {
     exercise: { name: string };
@@ -25,20 +26,22 @@ interface TraineeHistoryProps {
 }
 
 export function TraineeHistory({ workoutLogs }: TraineeHistoryProps) {
+    const t = useTranslations('TraineeHistory');
+
     return (
         <Card className="w-full border-0 shadow-none">
             <CardHeader className="px-0 pt-0">
-                <CardTitle>Workout History</CardTitle>
-                <CardDescription>Recent workouts logged by the trainee.</CardDescription>
+                <CardTitle>{t('title')}</CardTitle>
+                <CardDescription>{t('description')}</CardDescription>
             </CardHeader>
             <CardContent className="px-0">
                 <ScrollArea className="h-[400px] w-full rounded-md border">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Routine</TableHead>
-                                <TableHead>Exercises</TableHead>
+                                <TableHead>{t('date')}</TableHead>
+                                <TableHead>{t('routine')}</TableHead>
+                                <TableHead>{t('exercises')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -48,7 +51,7 @@ export function TraineeHistory({ workoutLogs }: TraineeHistoryProps) {
                                         {new Date(log.date).toLocaleDateString()}
                                     </TableCell>
                                     <TableCell>
-                                        {log.routine?.name || "Custom Workout"}
+                                        {log.routine?.name || t('customWorkout')}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col gap-1">
@@ -61,7 +64,7 @@ export function TraineeHistory({ workoutLogs }: TraineeHistoryProps) {
                                                 return acc;
                                             }, {})).map((group) => (
                                                 <span key={group.name} className="text-xs text-muted-foreground">
-                                                    {group.name}: {group.sets} sets
+                                                    {group.name}: {group.sets} {t('sets')}
                                                 </span>
                                             ))}
                                         </div>
@@ -71,7 +74,7 @@ export function TraineeHistory({ workoutLogs }: TraineeHistoryProps) {
                             {workoutLogs.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                                        No workouts logged yet.
+                                        {t('noWorkouts')}
                                     </TableCell>
                                 </TableRow>
                             )}

@@ -457,12 +457,23 @@ export async function addExercise(formData: FormData) {
     console.error("Failed to parse bodyParts", e);
   }
 
+  let muscles: string[] = [];
+  const musclesJson = formData.get('muscles') as string;
+  try {
+    if (musclesJson) {
+      muscles = JSON.parse(musclesJson);
+    }
+  } catch (e) {
+    console.error("Failed to parse muscles", e);
+  }
+
   const newExercise = await prisma.exercise.create({
     data: {
       name,
       description,
       videoUrl,
       bodyParts,
+      muscles,
     },
   });
 
@@ -490,6 +501,16 @@ export async function updateExercise(formData: FormData) {
     console.error("Failed to parse bodyParts", e);
   }
 
+  let muscles: string[] = [];
+  const musclesJson = formData.get('muscles') as string;
+  try {
+    if (musclesJson) {
+      muscles = JSON.parse(musclesJson);
+    }
+  } catch (e) {
+    console.error("Failed to parse muscles", e);
+  }
+
   try {
     const updatedExercise = await prisma.exercise.update({
       where: { id },
@@ -498,6 +519,7 @@ export async function updateExercise(formData: FormData) {
         description,
         videoUrl,
         bodyParts,
+        muscles,
       },
     });
 
