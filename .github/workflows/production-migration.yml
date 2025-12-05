@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'develop' && 'preview' }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -39,5 +41,3 @@ jobs:
 
       - name: Run Migrations
         run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
