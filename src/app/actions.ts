@@ -394,7 +394,11 @@ export async function getTraineeAnalytics(userId?: string) {
     // Process logs to get max weight per exercise over time
     const strengthProgress: Record<string, { date: string, weight: number, exerciseName: string }[]> = {};
 
-    workoutLogs.forEach((log: { date: { toISOString: () => string; }; exercises: any[]; }) => {
+    workoutLogs.forEach(
+      (log: {
+        date: { toISOString: () => string };
+        exercises: { weight: number; exercise: { name: string } }[];
+      }) => {
       const dateStr = log.date.toISOString().split('T')[0];
       log.exercises.forEach(exLog => {
         const exName = exLog.exercise.name;
